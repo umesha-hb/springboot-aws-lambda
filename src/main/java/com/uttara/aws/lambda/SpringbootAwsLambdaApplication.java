@@ -1,6 +1,7 @@
 package com.uttara.aws.lambda;
 
 import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.uttara.aws.lambda.domain.Order;
 import com.uttara.aws.lambda.repository.OrderDao;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,16 +19,18 @@ import java.util.stream.Collectors;
 @SpringBootApplication
 public class SpringbootAwsLambdaApplication {
 
+    @Autowired
+    private OrderDao orderDao;
 
-private final OrderDao orderDao;
-
-    public SpringbootAwsLambdaApplication(OrderDao orderDao) {
-        this.orderDao = orderDao;
-    }
 
     @Bean
     public Supplier<List<Order>> orders() {
-        return orderDao::buildOrders;
+        return () -> orderDao.buildOrders();
+    }
+
+    @Bean
+    public Function<String, List<Order>> findOrderByName() {
+        return (input) -> orderDao.buildOrders().stream().filter(order -> order.getName().equals(input)).collect(Collectors.toList());
     }
 
     public static void main(String[] args) {
